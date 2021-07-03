@@ -1,5 +1,5 @@
 """
-ASGI config for DjangoQuiz project.
+ASGI config for QuizApp project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 

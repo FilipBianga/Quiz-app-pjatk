@@ -1,0 +1,7 @@
+{% extends 'Quiz/dependencies.html' %} {% block content %} {% load static %}
+<h1 style="text-align: center;">Witaj na platformie QuizDash</h1>
+<br>
+<h3 style="text-align: center;">Wybierz quizz:</h3>
+
+{% for q in quizzes %}
+<a class="nav-link" href="{% url 'quizz' quizz_id=q.id %}">{{ q.name }}</a> {% endfor %} {% endblock %}

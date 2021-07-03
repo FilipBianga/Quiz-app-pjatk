@@ -1,158 +1,80 @@
-from django.shortcuts import redirect,render
-from django.contrib.auth import login,logout,authenticate
+from django.shortcuts import redirect, render
+from django.contrib.auth import login, logout, authenticate
+from django.http import HttpResponse, HttpRequest
 from .forms import *
-from .models import *
-from django.http import HttpResponse
- 
-# Tworzymy nowe widoki
-def home(request):
+
+
+def search_categories(request: HttpRequest) -> HttpResponse:
+    categories: list[Category] = Category.objects.all()
+
+    context = {
+        'categories': categories
+    }
+
+    return render(request, 'Quiz/categories.html', context)
+
+
+def search_quizzes(request: HttpRequest, category_id: int) -> HttpResponse:
+    quizzes: list[Quizz] = Quizz.objects.filter(category=category_id)
+    
+    context = {
+        'quizzes': quizzes
+    }
+
+    return render(request, 'Quiz/quizzes.html', context)
+
+
+def get_quizz(request: HttpRequest, quizz_id: int) -> HttpResponse:
+    quizz: Quizz = Quizz.objects.get(id=quizz_id)
+
+    context = {
+        'quizz_id': quizz.id,
+        'questions': quizz.questions
+    }
+
+    return render(request, 'Quiz/quizz.html', context)
+
+
+def get_results(request: HttpRequest, quizz_id: int) -> HttpResponse:
+    if request.method != "POST":
+        return redirect('categories')
+    
+    questions: list[Question] = Quizz.objects.get(id=quizz_id).questions
+    score: int = 0
+    wrong: int = 0
+    correct: int = 0
+    total: int = questions.count()
+    for q in questions.all():
+        for a in q.answers.all():
+            if str(a.id) == request.POST.get(str(q.id)):
+                if (a.correct):
+                    score += 10
+                    correct += 1
+                else:
+                    wrong += 1
+
+    percent: float = score/(total*10) * 100
+    context = {
+        'score': score,
+        'time': request.POST.get('timer'),
+        'correct': correct,
+        'wrong': wrong,
+        'percent': percent,
+        'total': total
+    }
+
+    return render(request,'Quiz/result.html',context)
+
+
+def home(request: HttpRequest) -> HttpResponse:
     if request.method=="POST":
-        return redirect('home')
+        return redirect('categories')
     else:
         context={}
-        return render(request, 'Quiz/home.html', context)
+        return redirect('categories')
 
-def maths(request):
-    if request.method == 'POST':
-        print(request.POST)
-        questions=Matematyka.objects.all()
-        score=0
-        wrong=0
-        correct=0
-        total=0
-        for q in questions:
-            total+=1
-            print(request.POST.get(q.mat))
-            print(q.ans)
-            print()
-            if q.ans ==  request.POST.get(q.mat):
-                score+=10
-                correct+=1
-            else:
-                wrong+=1
-        percent = score/(total*10) *100
-        context = {
-            'score':score,
-            'time': request.POST.get('timer'),
-            'correct':correct,
-            'wrong':wrong,
-            'percent':percent,
-            'total':total
-        }
-        return render(request,'Quiz/result.html',context)
-    else:
-        questions=Matematyka.objects.all()
-        context = {
-            'mats':questions
-        }
-        return render(request,'Quiz/maths.html',context)
-
-def physics(request):
-    if request.method == 'POST':
-        print(request.POST)
-        questions=Fizyka.objects.all()
-        score=0
-        wrong=0
-        correct=0
-        total=0
-        for q in questions:
-            total+=1
-            print(request.POST.get(q.fiz))
-            print(q.ans)
-            print()
-            if q.ans ==  request.POST.get(q.fiz):
-                score+=10
-                correct+=1
-            else:
-                wrong+=1
-        percent = score/(total*10) *100
-        context = {
-            'score':score,
-            'time': request.POST.get('timer'),
-            'correct':correct,
-            'wrong':wrong,
-            'percent':percent,
-            'total':total
-        }
-        return render(request,'Quiz/result.html',context)
-    else:
-        questions=Fizyka.objects.all()
-        context = {
-            'fizs':questions
-        }
-        return render(request,'Quiz/physics.html',context)
  
-def history(request):
-    if request.method == 'POST':
-        print(request.POST)
-        questions=Historia.objects.all()
-        score=0
-        wrong=0
-        correct=0
-        total=0
-        for q in questions:
-            total+=1
-            print(request.POST.get(q.his))
-            print(q.ans)
-            print()
-            if q.ans ==  request.POST.get(q.his):
-                score+=10
-                correct+=1
-            else:
-                wrong+=1
-        percent = score/(total*10) *100
-        context = {
-            'score':score,
-            'time': request.POST.get('timer'),
-            'correct':correct,
-            'wrong':wrong,
-            'percent':percent,
-            'total':total
-        }
-        return render(request,'Quiz/result.html',context)
-    else:
-        questions=Historia.objects.all()
-        context = {
-            'hiss':questions
-        }
-        return render(request,'Quiz/history.html',context)
-
-def informatics(request):
-    if request.method == 'POST':
-        print(request.POST)
-        questions=Informatyka.objects.all()
-        score=0
-        wrong=0
-        correct=0
-        total=0
-        for q in questions:
-            total+=1
-            print(request.POST.get(q.inf))
-            print(q.ans)
-            print()
-            if q.ans ==  request.POST.get(q.inf):
-                score+=10
-                correct+=1
-            else:
-                wrong+=1
-        percent = score/(total*10) *100
-        context = {
-            'score':score,
-            'time': request.POST.get('timer'),
-            'correct':correct,
-            'wrong':wrong,
-            'percent':percent,
-            'total':total
-        }
-        return render(request,'Quiz/result.html',context)
-    else:
-        questions=Informatyka.objects.all()
-        context = {
-            'infs':questions
-        }
-        return render(request,'Quiz/informatics.html',context)
- 
-def registerPage(request):
+def registerPage(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect('home') 
     else: 
@@ -167,7 +89,8 @@ def registerPage(request):
         }
         return render(request,'Quiz/register.html',context)
  
-def loginPage(request):
+
+def loginPage(request: HttpRequest) -> HttpResponse:
     if request.user.is_authenticated:
         return redirect('home')
     else:
@@ -181,6 +104,7 @@ def loginPage(request):
        context={}
        return render(request,'Quiz/login.html',context)
  
-def logoutPage(request):
+
+def logoutPage(request: HttpRequest) -> HttpResponse:
     logout(request)
     return redirect('/')
